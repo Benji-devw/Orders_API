@@ -1,6 +1,37 @@
 // ROUTE 3
 const Order = require('../models/orderModel')
 
+getOrderByOrderNumber = (req, res) => {
+    
+    // Search OrderNumber
+    let orderNumberValue = {};
+
+    for (let key in req.body) {
+        orderNumberValue = req.body[key];
+    }
+    
+    if (orderNumberValue.orderNumber.length === 15) {
+        Order.find(orderNumberValue)
+            .then(data => {
+                // console.log('data', data[0].createdAt)
+                return res.status(200).json({
+                    message: orderNumberValue,
+                    order: ({ orderNumber: data[0].orderNumber, items: data[0].items, date: data[0].createdAt})
+                });
+            })
+            .catch(err => console.log('Get order error :', err))
+
+    } else {
+        return res.status(400).json({
+            success: false,
+            error: 'Order number not find',
+        })
+    }
+
+    // console.log('orderNumberValue.orderNumber', orderNumberValue.orderNumber)
+    // console.log(orderNumberValue);
+}
+
 createOrder = (req, res) => {
     const body = req.body
 
@@ -11,6 +42,20 @@ createOrder = (req, res) => {
         })
     }
 
+    // // Search OrderNumber
+    // let orderNumberValue = {};
+    // for (let key in body) {
+    //     orderNumberValue = req.body[key];
+    // }
+    // if (orderNumberValue.ordernumber.length !== 15 || orderNumberValue.ordernumber.length === 0) {
+    //     return res.status(400).json({
+    //         success: false,
+    //         error: 'Order number not find',
+    //     })
+    // }
+
+
+    // Create Order
     const order = new Order({
         ...body,
         // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -55,6 +100,7 @@ updateOrder = async (req, res) => {
                 message: 'Product not found! !',
             })
         }
+        order.orderNumber = body.orderNumber
         order.items = body.items 
         order.client = body.client
         order.payer = body.payer
@@ -118,10 +164,12 @@ getOrders = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
+
 module.exports = {
     createOrder,
     deleteOrder,
     getOrders,
     updateOrder,
-    getOrderById
+    getOrderById,
+    getOrderByOrderNumber
 }

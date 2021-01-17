@@ -9,5 +9,6 @@ router.delete('/order/:id', OrderCtrl.deleteOrder)
 router.get('/order', OrderCtrl.getOrders)
 router.put('/order/:id', OrderCtrl.updateOrder)
 router.get('/order/:id', OrderCtrl.getOrderById)
+router.post('/getorderbyordernumber', OrderCtrl.getOrderByOrderNumber)
 
 module.exports = router
