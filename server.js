@@ -7,24 +7,15 @@ import orderRouter from "./routes/orderRouter";
 const fastify = Fastify({ logger: false });
 const apiPort = 8810;
 
-// Helmet
 fastify.register(helmet);
 
-// CORS
 fastify.register(cors, {
     origin: "*", // accéder à notre API depuis n'importe quelle origine ( '*' ) ;
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // envoyer des requêtes avec les méthodes mentionnées ( GET ,POST , etc.).
     allowedHeaders: ["Origin", "X-Requested-With", "Content", "Accept", "Content-Type", "Authorization"] // ajouter les headers mentionnés aux requêtes envoyées vers notre API
 });
 
-// body-parser n'est plus nécessaire, Fastify gère ça nativement.
-
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-// ROUTE 1 - Exemple de route Fastify
-// fastify.get('/', async (request, reply) => {
-//   return { hello: 'world' }
-// })
 
 fastify.register(orderRouter, { prefix: "/api" });
 
