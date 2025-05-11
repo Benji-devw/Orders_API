@@ -1,5 +1,5 @@
 // ROUTE 4
-const mongoose = require('mongoose')
+import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
 const Order = new Schema(
@@ -15,4 +15,4 @@ const Order = new Schema(
     { timestamps: true },   // Date post
 )
 
-module.exports = mongoose.model('order', Order)
+export default mongoose.model('order', Order)

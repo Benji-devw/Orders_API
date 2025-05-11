@@ -1,176 +1,186 @@
 // ROUTE 3
-const Order = require('../models/orderModel')
+import Order from '../models/orderModel.js'
 
-getOrderByOrderNumber = (req, res) => {
-    
-    // Search OrderNumber
+const getOrderByOrderNumber = async (request, reply) => {
     let orderNumberValue = {};
-
-    for (let key in req.body) {
-        orderNumberValue = req.body[key];
+    // Fastify parse le JSON automatiquement, request.body est déjà un objet
+    // On s'attend à ce que le corps soit { "orderNumber": "..." }
+    if (request.body && typeof request.body.orderNumber === 'string') {
+        orderNumberValue = { orderNumber: request.body.orderNumber };
+    } else {
+        return reply.code(400).send({
+            success: false,
+            error: 'Invalid request body. Expecting { "orderNumber": "..." }',
+        });
     }
     
     if (orderNumberValue.orderNumber.length === 15) {
-        Order.find(orderNumberValue)
-            .then(data => {
-                // console.log('data', data[0].createdAt)
-                return res.status(200).json({
-                    message: orderNumberValue,
+        try {
+            const data = await Order.find(orderNumberValue);
+            if (data && data.length > 0) {
+                return reply.code(200).send({
+                    message: orderNumberValue, // Peut-être renvoyer juste le numéro de commande ici?
                     order: ({ orderNumber: data[0].orderNumber, items: data[0].items, date: data[0].createdAt})
                 });
-            })
-            .catch(err => console.log('Get order error :', err))
-
+            } else {
+                return reply.code(404).send({
+                    success: false,
+                    error: 'Order number not found',
+                });
+            }
+        } catch (err) {
+            console.error('Get order by number error:', err);
+            return reply.code(500).send({ success: false, error: 'Internal server error' });
+        }
     } else {
-        return res.status(400).json({
+        return reply.code(400).send({
             success: false,
-            error: 'Order number not find',
-        })
+            error: 'Order number not valid (must be 15 characters)',
+        });
     }
-
-    // console.log('orderNumberValue.orderNumber', orderNumberValue.orderNumber)
-    // console.log(orderNumberValue);
 }
 
-createOrder = (req, res) => {
-    const body = req.body
+const createOrder = async (request, reply) => {
+    const body = request.body;
 
-    if (!body) {
-        return res.status(400).json({
+    if (!body || Object.keys(body).length === 0) { // Vérification plus robuste pour un body vide
+        return reply.code(400).send({
             success: false,
-            error: 'You must provide a order',
-        })
+            error: 'You must provide an order',
+        });
     }
 
-    // Vérifier que l'userId est fourni
     if (!body.userId) {
-        return res.status(400).json({
+        return reply.code(400).send({
             success: false,
             error: 'You must provide a userId for the order',
-        })
+        });
     }
 
-    // Create Order
-    const order = new Order({
-        ...body,
-        // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    })
+    const order = new Order(body);
 
-    if (!order) {
-        return res.status(400).json({ success: false, error: err })
+    try {
+        await order.save();
+        return reply.code(201).send({
+            success: true,
+            id: order._id,
+            message: 'Order created!',
+        });
+    } catch (error) {
+        console.error('Create order error:', error);
+        return reply.code(400).send({
+            error: error.message, // Envoi d'un message d'erreur plus clair
+            message: 'Order not created!',
+        });
     }
-
-    order
-        .save()
-        .then(() => {
-            return res.status(201).json({
-                success: true,
-                id: order._id,
-                message: 'order created!',
-            })
-        })
-        .catch(error => {
-            return res.status(400).json({
-                error,
-                message: 'order not created!',
-            })
-        })
 }
 
-updateOrder = async (req, res) => {
-    const body = req.body
-    // console.log('body', body)
+const updateOrder = async (request, reply) => {
+    const { body, params } = request;
 
-    if (!body) {
-        return res.status(400).json({
+    if (!body || Object.keys(body).length === 0) {
+        return reply.code(400).send({
             success: false,
             error: 'You must provide a body to update',
-        })
+        });
     }
-    Order.findOne({_id: req.params.id}, (err, order) => {
-        // console.log('order', order)
-        if (err) {
-            return res.status(404).json({
-                err,
-                message: 'Product not found! !',
-            })
+
+    try {
+        const order = await Order.findById(params.id);
+        
+        if (!order) {
+            return reply.code(404).send({
+                success: false,
+                message: 'Order not found!',
+            });
         }
-        order.orderNumber = body.orderNumber
-        order.items = body.items 
-        order.client = body.client
-        order.payer = body.payer
-        order.amount = body.amount 
-        order.statut = body.statut
-        order
-            .save()
-            .then(() => {
-                return res.status(200).json({
-                    success: true,
-                    id: order._id,
-                    message: 'order updated!',
-                })
-            })
-            .catch(error => {
-                return res.status(404).json({
-                    error,
-                    message: 'order not updated!',
-                })
-            })
-    })
+
+        // Mise à jour des champs. S'assurer que seuls les champs autorisés sont mis à jour.
+        // Par exemple, si body contient plus de champs que ceux attendus, ils seront ignorés ici.
+        if (body.orderNumber) order.orderNumber = body.orderNumber;
+        if (body.items) order.items = body.items; 
+        if (body.client) order.client = body.client;
+        if (body.payer) order.payer = body.payer;
+        if (body.amount) order.amount = body.amount; 
+        if (body.statut) order.statut = body.statut;
+        // ... ajouter d'autres champs si nécessaire
+
+        await order.save();
+        return reply.code(200).send({
+            success: true,
+            id: order._id,
+            message: 'Order updated!',
+        });
+    } catch (error) {
+        console.error('Update order error:', error);
+        if (error.kind === 'ObjectId') { // Si l'ID n'est pas un ObjectId valide
+             return reply.code(400).send({ success: false, message: 'Invalid order ID format' });
+        }
+        return reply.code(500).send({
+            error: error.message,
+            message: 'Order not updated!',
+        });
+    }
 }
 
-deleteOrder = async (req, res) => {
-    await Order.findOneAndDelete({ _id: req.params.id }, (err, order) => {
-        if (err) {
-            return res.status(400).json({ success: false, error: err })
-        }
+const deleteOrder = async (request, reply) => {
+    try {
+        const order = await Order.findByIdAndDelete(request.params.id);
 
         if (!order) {
-            return res
-                .status(404)
-                .json({ success: false, error: `order not found` })
+            return reply.code(404).send({ success: false, error: `Order not found` });
         }
 
-        return res.status(200).json({ success: true, data: order })
-    }).catch(err => console.log(err))
-}
-
-getOrderById = async (req, res) => {
-    await Order.findOne({ _id: req.params.id }, (err, order) => {
-        if (err) {
-            return res.status(400).json({ success: false, error: err })
-        }
-
-        return res.status(200).json({ success: true, data: order })
-    }).catch(err => console.log(err))
-}
-
-getOrders = async (req, res) => {
-    await Order.find({}, (err, orders) => {
-        if (err) {
-            return res.status(400).json({ success: false, error: err })
-        }
-        if (!orders.length) {
-            return res
-                .status(404)
-                .json({ success: false, error: `order not found` })
-        }
-        return res.status(200).json({ success: true, data: orders })
-    }).catch(err => console.log(err))
-}
-
-getOrdersByUserId = async (req, res) => {
-    try {
-        const orders = await Order.find({ userId: req.params.userId });
-        return res.status(200).json({ success: true, data: orders });
+        return reply.code(200).send({ success: true, data: order });
     } catch (err) {
-        console.log(err);
-        return res.status(400).json({ success: false, error: err.message });
+        console.error('Delete order error:', err);
+        if (err.kind === 'ObjectId') {
+             return reply.code(400).send({ success: false, message: 'Invalid order ID format' });
+        }
+        return reply.code(500).send({ success: false, error: 'Internal server error' });
     }
 }
 
+const getOrderById = async (request, reply) => {
+    try {
+        const order = await Order.findById(request.params.id);
+        if (!order) {
+            return reply.code(404).send({ success: false, error: `Order not found` });
+        }
+        return reply.code(200).send({ success: true, data: order });
+    } catch (err) {
+        console.error('Get order by ID error:', err);
+        if (err.kind === 'ObjectId') {
+             return reply.code(400).send({ success: false, message: 'Invalid order ID format' });
+        }
+        return reply.code(500).send({ success: false, error: 'Internal server error' });
+    }
+}
 
-module.exports = {
+const getOrders = async (request, reply) => {
+    try {
+        const orders = await Order.find({});
+        // Il n'est pas nécessaire de renvoyer une 404 si la liste est vide, une liste vide est une réponse valide.
+        return reply.code(200).send({ success: true, data: orders });
+    } catch (err) {
+        console.error('Get orders error:', err);
+        return reply.code(500).send({ success: false, error: 'Internal server error' });
+    }
+}
+
+const getOrdersByUserId = async (request, reply) => {
+    try {
+        const orders = await Order.find({ userId: request.params.userId });
+        return reply.code(200).send({ success: true, data: orders });
+    } catch (err) {
+        console.error('Get orders by userID error:', err);
+        // Pas besoin de vérifier err.kind ici car userId n'est pas forcément un ObjectId
+        return reply.code(500).send({ success: false, error: err.message });
+    }
+}
+
+// Exporter un objet avec toutes les fonctions
+export default {
     createOrder,
     deleteOrder,
     getOrders,
@@ -178,4 +188,4 @@ module.exports = {
     getOrderById,
     getOrderByOrderNumber,
     getOrdersByUserId
-}
+};

@@ -1,36 +1,41 @@
-const express = require("express"),
-    bodyParser = require("body-parser"),
-    helmet = require("helmet"),
-    orderRouter = require("./routes/orderRouter"),
-    db = require("./db/connectToDb"),
-    app = express(),
-    apiPort = 8802;
-// cors = require('cors'),
+import Fastify from 'fastify';
+import helmet from '@fastify/helmet';
+import cors from '@fastify/cors';
+import db from "./db/connectToDb";
+import orderRouter from "./routes/orderRouter";
+
+const fastify = Fastify({ logger: false });
+const apiPort = 8810;
 
 // Helmet
-app.use(helmet());
+fastify.register(helmet);
 
-// CORS (système de sécurité)
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*"); // accéder à notre API depuis n'importe quelle origine ( '*' ) ;
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
-    ); // ajouter les headers mentionnés aux requêtes envoyées vers notre API (Origin , X-Requested-With , etc.) ;
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-    ); // envoyer des requêtes avec les méthodes mentionnées ( GET ,POST , etc.).
-    next();
+// CORS
+fastify.register(cors, {
+    origin: "*", // accéder à notre API depuis n'importe quelle origine ( '*' ) ;
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // envoyer des requêtes avec les méthodes mentionnées ( GET ,POST , etc.).
+    allowedHeaders: ["Origin", "X-Requested-With", "Content", "Accept", "Content-Type", "Authorization"] // ajouter les headers mentionnés aux requêtes envoyées vers notre API
 });
 
-// BODY-PARSER == parse les datas pr les lire (à placer au dessus des demande POST)
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+// body-parser n'est plus nécessaire, Fastify gère ça nativement.
 
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
-// ROUTE 1
-app.use("/api", orderRouter);
+// ROUTE 1 - Exemple de route Fastify
+// fastify.get('/', async (request, reply) => {
+//   return { hello: 'world' }
+// })
 
-app.listen(apiPort, () => console.log(`Server running on port ${apiPort}`));
+fastify.register(orderRouter, { prefix: "/api" });
+
+const start = async () => {
+  try {
+    await fastify.listen({ port: apiPort });
+    fastify.log.info(`Server running on port ${apiPort}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();

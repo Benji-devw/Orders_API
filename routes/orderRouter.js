@@ -1,14 +1,13 @@
-const express = require('express')
-const router = express.Router()
+import OrderCtrl from '../controllers/orderController.js'
 
-// ROUTE 2
-const OrderCtrl = require('../controllers/orderController')
+async function orderRoutes (fastify, options) {
+  fastify.post('/order', OrderCtrl.createOrder)
+  fastify.delete('/order/:id', OrderCtrl.deleteOrder)
+  fastify.get('/order', OrderCtrl.getOrders)
+  fastify.put('/order/:id', OrderCtrl.updateOrder)
+  fastify.get('/order/:id', OrderCtrl.getOrderById)
+  fastify.post('/getorderbyordernumber', OrderCtrl.getOrderByOrderNumber)
+  fastify.get('/orders/user/:userId', OrderCtrl.getOrdersByUserId)
+}
 
-router.post('/order', OrderCtrl.createOrder)
-router.delete('/order/:id', OrderCtrl.deleteOrder)
-router.get('/order', OrderCtrl.getOrders)
-router.put('/order/:id', OrderCtrl.updateOrder)
-router.get('/order/:id', OrderCtrl.getOrderById)
-router.post('/getorderbyordernumber', OrderCtrl.getOrderByOrderNumber)
-router.get('/orders/user/:userId', OrderCtrl.getOrdersByUserId)
-module.exports = router
+export default orderRoutes
