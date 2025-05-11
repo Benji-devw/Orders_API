@@ -22,7 +22,7 @@ fastify.register(orderRouter, { prefix: "/api" });
 const start = async () => {
   try {
     await fastify.listen({ port: apiPort });
-    fastify.log.info(`Server running on port ${apiPort}`);
+    fastify.log.info(`🚀 Server running on port ${apiPort}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
