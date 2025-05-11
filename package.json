@@ -1,10 +1,11 @@
 {
-  "name": "vallena_orders---copie",
+  "name": "vallena_orders",
+  "version": "0.1.1",
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run server.js",
-    "dev": "bun --watch server.js"
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
