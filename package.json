@@ -1,14 +1,20 @@
 {
-  "name": "server",
+  "name": "orders",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Vallena_orders_api",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node server.js"
+  },
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
-    "helmet": "^4.1.1",
-    "mongoose": "^5.7.5",
-    "stripe": "^8.82.0"
+    "helmet": "^4.6.0",
+    "mongoose": "^5.12.12",
+    "nodemon": "^2.0.7",
+    "stripe": "^8.150.0"
   }
 }

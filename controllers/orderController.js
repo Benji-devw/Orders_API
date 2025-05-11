@@ -42,18 +42,13 @@ createOrder = (req, res) => {
         })
     }
 
-    // // Search OrderNumber
-    // let orderNumberValue = {};
-    // for (let key in body) {
-    //     orderNumberValue = req.body[key];
-    // }
-    // if (orderNumberValue.ordernumber.length !== 15 || orderNumberValue.ordernumber.length === 0) {
-    //     return res.status(400).json({
-    //         success: false,
-    //         error: 'Order number not find',
-    //     })
-    // }
-
+    // Vérifier que l'userId est fourni
+    if (!body.userId) {
+        return res.status(400).json({
+            success: false,
+            error: 'You must provide a userId for the order',
+        })
+    }
 
     // Create Order
     const order = new Order({
@@ -164,6 +159,16 @@ getOrders = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
+getOrdersByUserId = async (req, res) => {
+    try {
+        const orders = await Order.find({ userId: req.params.userId });
+        return res.status(200).json({ success: true, data: orders });
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({ success: false, error: err.message });
+    }
+}
+
 
 module.exports = {
     createOrder,
@@ -171,5 +176,6 @@ module.exports = {
     getOrders,
     updateOrder,
     getOrderById,
-    getOrderByOrderNumber
+    getOrderByOrderNumber,
+    getOrdersByUserId
 }
