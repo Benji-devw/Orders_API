@@ -5,7 +5,7 @@ import db from "./db/connectToDb";
 import orderRouter from "./routes/orderRouter";
 
 const fastify = Fastify({ logger: false });
-const apiPort = 8810;
+const apiPort = 8804;
 
 fastify.register(helmet);
 
@@ -21,8 +21,9 @@ fastify.register(orderRouter, { prefix: "/api" });
 
 const start = async () => {
   try {
+    console.log(`🚀 Server running on port ${apiPort}`);
     await fastify.listen({ port: apiPort });
-    fastify.log.info(`🚀 Server running on port ${apiPort}`);
+    fastify.log.info(`🔍 Server running on port ${apiPort}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

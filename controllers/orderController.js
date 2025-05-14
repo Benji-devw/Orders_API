@@ -171,6 +171,7 @@ const getOrders = async (request, reply) => {
 const getOrdersByUserId = async (request, reply) => {
     try {
         const orders = await Order.find({ userId: request.params.userId });
+        // console.log(orders);
         return reply.code(200).send({ success: true, data: orders });
     } catch (err) {
         console.error('Get orders by userID error:', err);
